@@ -1,0 +1,24 @@
+# Java / Maven
+/target/
+*.class
+
+# Node / Vite
+/node_modules/
+/src/main/resources/static/dist/
+/src/main/resources/static/assets/
+/src/main/resources/static/index.html
+
+# Local gallery data
+/data/
+
+# IDE and OS files
+/.vscode/
+/.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local environment settings
+.env
+.env.*
+!.env.example

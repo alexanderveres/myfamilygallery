@@ -1,0 +1,77 @@
+<main class="shell">
+  <header>
+    <div class="brand">
+      <span class="brand-mark">M</span>
+      <div><h1>MyFamilyGallery</h1><p>{{ totalElements }} assets</p></div>
+    </div>
+    <div class="header-actions">
+      <label class="button secondary">Upload files
+        <input type="file" multiple accept="image/*,video/*" @change="uploadFiles" />
+      </label>
+    </div>
+  </header>
+
+  <section class="import-panel">
+    <div class="import-copy">
+      <h2>Import from folder</h2>
+      <p>Duplicates are detected using SHA-256.</p>
+    </div>
+    <div class="import-controls">
+      <input v-model="importFolder" placeholder="e.g. C:\Users\you\Pictures" @keyup.enter="importFromFolder" />
+      <button @click="importFromFolder">Import</button>
+    </div>
+    <p v-if="importMessage" class="success">{{ importMessage }}</p>
+    <p v-if="error" class="error">{{ error }}</p>
+  </section>
+
+  <section class="filters">
+    <input v-model="filters.q" @input="reload" placeholder="Search name, location or device" class="search" />
+    <select v-model="filters.type" @change="reload"><option value="">All types</option><option value="image">Photos</option><option value="video">Videos</option></select>
+    <select v-model="filters.year" @change="reload"><option value="">All years</option><option v-for="year in ['2026','2025','2024','2023','2022','2021','2020']" :key="year">{{ year }}</option></select>
+    <select v-model="filters.month" @change="reload"><option value="">All months</option><option v-for="month in 12" :value="month" :key="month">{{ String(month).padStart(2,'0') }}</option></select>
+    <select v-model="filters.orientation" @change="reload"><option value="">Any orientation</option><option value="landscape">Landscape</option><option value="portrait">Portrait</option><option value="unknown">Unknown</option></select>
+    <input v-model="filters.location" @input="reload" placeholder="Location" />
+  </section>
+
+  <div v-if="loading" class="status">Loading gallery...</div>
+  <section v-else class="gallery">
+    <article v-for="asset in assets" :key="asset.id" class="asset" @click="openAsset(asset)">
+      <div class="media">
+        <video v-if="asset.type === 'video'" :src="'/api/assets/' + asset.id + '/content'" muted></video>
+        <img v-else :src="'/api/assets/' + asset.id + '/content'" :alt="asset.originalName" loading="lazy" />
+        <span v-if="asset.type === 'video'" class="video-badge">VIDEO</span>
+      </div>
+      <div class="asset-meta">
+        <strong>{{ asset.originalName }}</strong>
+        <span>{{ formatDate(asset.takenAt) }}</span>
+        <small>{{ size(asset.size) }} · {{ asset.orientation }}</small>
+      </div>
+    </article>
+    <div v-if="!assets.length" class="empty">
+      <div class="empty-icon">◇</div>
+      <h2>{{ totalElements ? 'No assets on this page' : 'No assets found' }}</h2>
+      <p v-if="!totalElements">Import a folder, upload files, or adjust your filters.</p>
+    </div>
+  </section>
+  <nav v-if="totalPages > 1" class="pagination" aria-label="Gallery pages">
+    <button :disabled="currentPage === 0" @click="changePage(currentPage - 1)">Previous</button>
+    <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+    <button :disabled="currentPage + 1 >= totalPages" @click="changePage(currentPage + 1)">Next</button>
+  </nav>
+
+  <aside v-if="selected" class="detail" @click.self="selected = null">
+    <div class="detail-card">
+      <button class="close" @click="selected = null">×</button>
+      <video v-if="selected.type === 'video'" :src="'/api/assets/' + selected.id + '/content'" controls></video>
+      <img v-else :src="'/api/assets/' + selected.id + '/content'" :alt="selected.originalName" />
+      <h2>{{ selected.originalName }}</h2>
+      <dl>
+        <dt>Taken</dt><dd>{{ formatDate(selected.takenAt) }}</dd>
+        <dt>Location</dt><dd>{{ selected.location || 'Unknown' }}</dd>
+        <dt>Device</dt><dd>{{ selected.deviceId || 'Unknown' }}</dd>
+        <dt>Dimensions</dt><dd>{{ selected.width || '?' }} × {{ selected.height || '?' }}</dd>
+        <dt>Stored at</dt><dd>{{ storagePath + '\\' + selected.relativePath }}</dd>
+      </dl>
+    </div>
+  </aside>
+</main>
